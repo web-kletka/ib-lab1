@@ -20,7 +20,7 @@ jobs:
           pip install --target pydeps -r requirements.txt
 
       - name: sast
-        run: bandit -r . -x pydeps
+        run: bandit -r . -x ./pydeps
 
       - name: auth
         run: python -m unittest test_security.py
