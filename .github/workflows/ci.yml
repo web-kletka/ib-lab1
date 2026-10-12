@@ -17,7 +17,7 @@ jobs:
       - name: install
         run: |
           pip install -r requirements.txt bandit
-          pip install --target pydeps -r requirements.txt
+          pip install --target pydeps/site-packages -r requirements.txt
 
       - name: sast
         run: bandit -r . -x ./pydeps
