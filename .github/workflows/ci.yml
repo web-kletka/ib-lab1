@@ -20,6 +20,9 @@ jobs:
       - name: sast
         run: bandit -r .
 
+      - name: auth
+        run: python -m unittest test_security.py
+
       - name: sca
         uses: dependency-check/Dependency-Check_Action@main
         with:

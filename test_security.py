@@ -10,7 +10,6 @@ os.environ["SEED_PASSWORD"] = secrets.token_hex(16)
 
 import app as application
 
-
 class SecurityTests(unittest.TestCase):
     def setUp(self):
         fd, self.path = tempfile.mkstemp(suffix=".db")
