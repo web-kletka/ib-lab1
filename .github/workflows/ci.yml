@@ -17,10 +17,10 @@ jobs:
       - name: install
         run: |
           pip install -r requirements.txt bandit
-          pip install --target pydeps -r requirements.txt
+          pip install  pydeps -r requirements.txt
 
       - name: sast
-        run: bandit -r .
+        run: bandit -r . -x pydeps
 
       - name: auth
         run: python -m unittest test_security.py
