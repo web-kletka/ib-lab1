@@ -15,7 +15,9 @@ jobs:
           python-version: "3.12"
 
       - name: install
-        run: pip install -r requirements.txt bandit
+        run: |
+          pip install -r requirements.txt bandit
+          pip install --target pydeps -r requirements.txt
 
       - name: sast
         run: bandit -r .
@@ -27,7 +29,7 @@ jobs:
         uses: dependency-check/Dependency-Check_Action@main
         with:
           project: lab1
-          path: .
+          path: pydeps
           format: HTML
           out: reports
 
