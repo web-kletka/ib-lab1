@@ -4,12 +4,15 @@ import os
 import secrets
 import sqlite3
 from functools import wraps
+from dotenv import load_dotenv
 
 import bcrypt
 import jwt
 from flask import Flask, g, jsonify, request
 
 app = Flask(__name__)
+
+load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
 JWT_ALGO = "HS256"
@@ -61,12 +64,45 @@ def require_auth(view):
         if len(parts) != 2 or parts[0] != "Bearer":
             return jsonify({"error": "unauthorized"}), 401
         try:
-            jwt.decode(parts[1], os.environ["JWT_SECRET"], algorithms=[JWT_ALGO])
+            payload = jwt.decode(parts[1], os.environ["JWT_SECRET"], algorithms=[JWT_ALGO])
         except jwt.PyJWTError:
+            return jsonify({"error": "unauthorized"}), 401
+        g.login = payload.get("sub")
+        if not isinstance(g.login, str) or g.login == "":
             return jsonify({"error": "unauthorized"}), 401
         return view(*args, **kwargs)
 
     return wrapped
+
+
+@app.post("/auth/register")
+def register():
+    body = request.get_json(silent=True) or {}
+    login_name = body.get("login")
+    password = body.get("password")
+    if (
+        not isinstance(login_name, str)
+        or not isinstance(password, str)
+        or len(login_name) == 0
+        or len(password) == 0
+    ):
+        return jsonify({"error": "invalid"}), 400
+
+    db = get_db()
+    row = db.execute("SELECT id FROM users WHERE login = ?", (login_name,)).fetchone()
+    if row is not None:
+        return jsonify({"error": "exists"}), 409
+
+    password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    try:
+        db.execute(
+            "INSERT INTO users (login, password_hash) VALUES (?, ?)",
+            (login_name, password_hash),
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "exists"}), 409
+    return jsonify({"login": html.escape(login_name)}), 201
 
 
 @app.post("/auth/login")
@@ -93,6 +129,12 @@ def login():
         algorithm=JWT_ALGO,
     )
     return jsonify({"token": token})
+
+
+@app.get("/auth/me")
+@require_auth
+def me():
+    return jsonify({"login": html.escape(g.login)})
 
 
 @app.get("/api/data")
