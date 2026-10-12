@@ -15,26 +15,15 @@ jobs:
           python-version: "3.12"
 
       - name: install
-        run: |
-          pip install -r requirements.txt bandit
-          pip install --target pydeps/site-packages -r requirements.txt
+        run: pip install -r requirements.txt bandit
 
       - name: sast
-        run: bandit -r . -x ./pydeps
+        run: bandit -r .
 
       - name: auth
         run: python -m unittest test_security.py
 
       - name: sca
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: lab1
-          path: pydeps
-          format: HTML
-          out: reports
-
-      - name: upload report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check
-          path: reports
+        run: |
+          pip install pip-audit==2.10.1
+          pip-audit -r requirements.txt
